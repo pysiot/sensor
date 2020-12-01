@@ -6,6 +6,7 @@ import 'package:sensor/model/create_device_model.dart';
 
 import 'package:sensor/model/sensores_model.dart';
 import 'package:sensor/provider/db_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SensoresProvider {
 
@@ -55,26 +56,42 @@ class SensoresProvider {
   }
 
   Future<List<ConsumoModel>> getSensorByDevice() async {
+    
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String cache = prefs.getString('device') ?? 'XX';
 
-    String codDevice = await DBProvider.db.buscarDevice();
-    print('Resultado de busqueda de dispositivos enSQLLITE  => '+codDevice);
-    final url = '$_urlAWS/consumo/list/' + codDevice;//'3FD1C0'; //idDevice;
+    print(' ********************** Datos en el Cache => '+cache);
+
+    //String codDevice = await DBProvider.db.buscarDevice() ;
+    
+    //print('Resultado de busqueda de dispositivos enSQLLITE  => '+codDevice);
+    final url = '$_urlAWS/consumo/list/' + cache;
+    // if (codDevice == 'S/D' || codDevice == null || codDevice == '' ){
+    //   url = '$_urlAWS/consumo/list/' + cache;
+    // }else {
+    //  url = '$_urlAWS/consumo/list/' + codDevice; 
+    // }
+    //'3FD1C0'; //idDevice;
     final resp = await http.get(url);
     
     final List<dynamic> decodedData = json.decode(resp.body);
+
+    print('Cantidad de Registros encontrados para el dispositivo: '+decodedData.length.toString());
+
     List<ConsumoModel> sensores = new List();
     
-    if ( decodedData != null ) {
-      decodedData.forEach((sensor) {
-        final sensorTemp = ConsumoModel.fromJson(sensor);
-        sensores.add(sensorTemp);      
-      });
-    }
-    /*if ( decodedData == null ) return [];
+    // if ( decodedData != null ) {
+    //   decodedData.forEach((sensor) {
+    //     final sensorTemp = ConsumoModel.fromJson(sensor);
+    //     sensores.add(sensorTemp);      
+    //   });
+    //}
+    if ( decodedData == null ) return [];
     decodedData.forEach((sensor) {
       final sensorTemp = ConsumoModel.fromJson(sensor);
       sensores.add(sensorTemp);      
-    });*/
+    });
+    print('Valores de Sensores: '+sensores.toString());
     return sensores;
   }
 

@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sensor/res/Res.dart';
-import 'package:sensor/widget/util.dart';
-import 'colored_container.dart';
-import 'package:intl/intl.dart';
-
  
 Widget WeatherDetailsHeader(double statusBarHeight, String formattedDateTime) {
 
@@ -57,9 +53,4 @@ Widget WeatherDetailsHeader(double statusBarHeight, String formattedDateTime) {
     ),
     padding: new EdgeInsets.only(top: statusBarHeight),
   );
-
-
 }
-
-/*
-          */

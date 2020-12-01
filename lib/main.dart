@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sensor/Constant/Constant.dart';
 import 'package:sensor/Screens/SplashScreen.dart';
-import 'package:sensor/home_widget.dart';
 import 'package:sensor/pages/sensores_page.dart';
 import 'package:sensor/pages/sensores_page2.dart';
 

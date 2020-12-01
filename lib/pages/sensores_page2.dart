@@ -2,11 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:sensor/model/create_device_model.dart';
 import 'package:sensor/model/sensores_model.dart';
-import 'package:sensor/pages/report_page.dart';
 import 'package:sensor/pages/sensores_page.dart';
 import 'package:sensor/provider/sensores_provider.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'consumo_report_page.dart';
 
 class SensoresPageDos extends StatefulWidget {
   SensoresPageDos({Key key}) : super(key: key);
@@ -20,9 +21,27 @@ class _SensoresPageDosState extends State<SensoresPageDos> {
   Future<String> _valorShared;
   CreateDeviceModel sensorModel = CreateDeviceModel();
   //bool showListado = false;
-  String device = 'x';
+  String _deviceInCache = '';
   final sensoresProvider = new SensoresProvider();
   final formKey = GlobalKey<FormState>();
+
+  Future _getDeviceInCache() async{
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String cache = prefs.getString('device') ?? '';
+
+    setState(() {
+      _deviceInCache = cache;
+    });
+  }
+
+ @override
+  void initState() {
+    _getDeviceInCache().then((value){
+      print('Device in cache.');
+    });
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +51,11 @@ class _SensoresPageDosState extends State<SensoresPageDos> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: Text('Actividad diaria'),
+        title: Text('Consumo Diario'),
       ),
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.restore),
+        backgroundColor: Colors.redAccent,
+        child: Icon(Icons.search),
         onPressed: (){ 
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => SensoresPage()));
@@ -44,23 +64,6 @@ class _SensoresPageDosState extends State<SensoresPageDos> {
       body: Container(
         child: Column(
           children: [
-           /* Container(
-              height: 130,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Form(
-                  key: formKey,
-                  child: Container(
-                    child: Column(
-                      children: [
-                        _botonCrearSensor(),                          // _botonCrearReset(),  
-                        _txtDevice(),
-                      ],
-                    ),
-                  )),
-              ),
-              
-            ),*/
             Expanded(
               child: Container( 
                 child: _listarSensores_porDevice() 
@@ -78,57 +81,87 @@ class _SensoresPageDosState extends State<SensoresPageDos> {
     );
   }
 
-  Widget _listarSensores_porDevice(){   
+  Widget _listarSensores_porDevice(){
 
     return FutureBuilder(
-      future: sensoresProvider.getSensorByDevice(), 
+      future: sensoresProvider.getSensorByDevice() ?? null, 
       builder: ( BuildContext context, AsyncSnapshot<List<ConsumoModel>> snapshot){
-        if ( snapshot.hasData ) {
+        
+        if ( !snapshot.hasData) {
+          return Center( child: CircularProgressIndicator());
+        }else{
           final sensores = snapshot.data;          
           return ListView.builder(
             shrinkWrap: true,
             itemCount: sensores.length,
             itemBuilder: (context, i) => _crearItemSensor(context, sensores[i] )
           );
-        } else {
-          return Center( child: CircularProgressIndicator());
         }
+       /* else if (snapshot.hasError)  {
+          return Text("ERROR: ${snapshot.error}");
+        }
+         else {
+          return ListView.builder(
+            shrinkWrap: true,
+            itemCount: 1,
+            itemBuilder: (context, i) => _crearItemSensorSinData(context)
+          );
+         // return Text('None');
+          //return Center( child: CircularProgressIndicator());
+        }*/
+        
       }
     );
   }
 
   Widget _crearItemSensor(BuildContext context, ConsumoModel sensor) {
 
-    print('Cantiodad de sensores.....');
-    //print(sensor.id);
+    print(' ------------------------------------ QTY de SENSORES.....'+sensor.device);
 
-    if(sensor != null){
-      return ListTile( 
-        //title: Text('Consumo Las Malvinas'+ Util().getMonth()), //('${ sensor.device } '),
-        title: Text('${ sensor.device } : ${ sensor.kwhCalc }' + ' kw.h'),
-        subtitle: Text('${ sensor.fechaCalc }'),
-        onTap: () => {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-              builder: (context) => new ReportPage(),
-          ),)
-          },
-      );
-    }else{
-      return ListTile( 
-        //title: Text('Consumo Las Malvinas'+ Util().getMonth()), //('${ sensor.device } '),
-        title: Text('No existe registros para el dispositivo.'),
-        subtitle: Text('Intente registrar un dispositivo activo.'),
-        onTap: () => {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-              builder: (context) => null,
-          ),)
-          },
-      );
-    }
+      if(sensor.device != '' || sensor.device != null){
+        return ListTile( 
+          leading: Icon(Icons.info),
+          title: new Text('${ sensor.device } : ${ sensor.kwhCalc }' + ' kw.h'),
+          subtitle: Text('${ sensor.fechaCalc }'),
+          trailing: Icon(Icons.launch),
+          onTap: () => {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                builder: (context) => new ConsumoMensualHomePage(), //ReportPage(),
+            ),)
+            },
+        );
+      }else{
+        return ListTile( 
+          //title: Text('Consumo Las Malvinas'+ Util().getMonth()), //('${ sensor.device } '),
+          title: Text('No existe registros para el dispositivo ' +_deviceInCache),
+          subtitle: Text('Intente registrar un dispositivo activo.'),
+          onTap: () => {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                builder: (context) => null,
+            ),)
+            },
+        );
+      }
+
+  }
+  Widget _crearItemSensorSinData(BuildContext context) {
+
+    return ListTile( 
+      //title: Text('Consumo Las Malvinas'+ Util().getMonth()), //('${ sensor.device } '),
+      title: Text('No existe registros para el dispositivo.'),
+      subtitle: Text('Intente registrar un dispositivo activo.'),
+      onTap: () => {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+            builder: (context) => null,
+        ),)
+        },
+    );
   }
 
   Widget _botonCrearReset() {
@@ -145,94 +178,4 @@ class _SensoresPageDosState extends State<SensoresPageDos> {
       },
     );
   }
-
-/*
-  _guardarDevice(String device) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('device', device);
-
-   // String valor = prefs.getString('device');
-     print('.......INI.....VALOR DE LA VARIABLE CACHE DEVICE...............');
-     print(prefs.getString('device'));
-     print('.......FIN....VALOR DE LA VARIABLE CACHE DEVICE..................');
-    if ( prefs.getString('device') == null ) {
-      prefs.setString('device', device);
-      // String valor = prefs.getString('device');
-      setState(() {
-        device = prefs.getString('device');      
-      });
-      print('.DASDASDASDASDASD..');
-      print(device);
-      print('.GGGGGGGGGGGGGGGGGGGGGGGG....');
-    }
-  }
-
-  Widget _txtDevice() {
-    return TextFormField(
-      controller: _deviceController,
-      decoration: InputDecoration(
-        labelText: 'Device:'
-      ),
-    );
-  }
-
-  Widget _botonCrearSensor() {
-    return RaisedButton.icon(
-      icon: Icon(Icons.save),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0)
-      ),
-      color: Colors.redAccent,
-      textColor: Colors.white,
-      label: Text("GUARDAR SENSOR"),
-      onPressed: () {
-        print(_deviceController.text);
-        _guardarDevice(_deviceController.text);
-        // if (device != "X" ){
-          /* setState(() {
-             showListado = true;
-           });*/
-        // }
-        sensorModel.device = "MOD0001";
-        sensorModel.fec_registro = "2025-11-28 01:25:56";
-        sensorModel.locacion = "MMM";
-        sensorModel.servicio = "NN";
-        sensoresProvider.createSensor(sensorModel);
-      },
-    );
-  }*/
-
-/*
-  _crearListado() {
-    return FutureBuilder(
-      future: sensoresProvider.getAllSensorMeasures(), //loadDataSensors(), // obtenerSensoresActivos(),
-      builder: ( BuildContext context, AsyncSnapshot<List<SensorModel>> snapshot){
-        //if ( snapshot.hasData ) {
-          final sensores = snapshot.data;
-          return ListView.builder(
-            itemCount: 1, //sensores.length,
-            itemBuilder: (context, i) => _crearItem(context, sensores[i] )
-          );
-        /*} else {
-          return Center( child: CircularProgressIndicator());
-        }*/
-      }
-    );
-  }
-
-  Widget _crearItem(BuildContext context, SensorModel sensor) {
-
-    return ListTile( 
-      title: Text('Consumo Las Malvinas'+ Util().getMonth()), //('${ sensor.device } '),
-      subtitle: Text('3FD1C0'),//'${ sensor.device }'),
-      onTap: () => {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-            builder: (context) => new ReportPage(),
-        ),)
-        },
-    );
-  }*/
-
 }

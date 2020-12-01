@@ -25,7 +25,7 @@ class _SensoresPageState extends State<SensoresPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: Text('BUSCAR'),
+        title: Text('Buscar Sensor'),
       ),
       /*floatingActionButton: FloatingActionButton(
         child: Icon(Icons.restore),
@@ -48,9 +48,9 @@ class _SensoresPageState extends State<SensoresPage> {
                   key: formKey,
                   child: Container(
                     child: Column(
-                      children: [
-                        _botonCrearSensor(),                          // _botonCrearReset(),  
+                      children: [                                                 // _botonCrearReset(),  
                         _txtDevice(),
+                        _botonCrearSensor(), 
                       ],
                     ),
                   )),

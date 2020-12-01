@@ -21,12 +21,6 @@ class SplashScreenState extends State<SplashScreen>
   Animation<double> animation;
 
   startTime() async {
-
-    _getDatosCache().then((value){
-      print('-------------------------------------------'+value);
-      print('Async done');
-    }); 
-    
     var _duration = new Duration(seconds: 3);
     return new Timer(_duration, navigationPage);
   }
@@ -35,35 +29,29 @@ class SplashScreenState extends State<SplashScreen>
   Future<String> _getDatosCache() async {
 
     String cacheDevice = await DBProvider.db.buscarDevice();
-    print('*******  inicio PAGINA VER SI EXISTE ALGUN DISPOSITIVO REGISTRADO ******** ');
-    print(cacheDevice);
-    print('*******  fin    ******** ');
     
     setState(() {
-      if( cacheDevice == 'S/D'){
-        _existeEnCache = 'NO';
-      } else{
-        _existeEnCache = 'SI';
-      }          
+        _existeEnCache = cacheDevice;    
     });
     return 'Cache revisado.';  
   }
   
-  void navigationPage() {
-    
-    print('Validación en Cache => ' +_existeEnCache +' existe.');
-    if(_existeEnCache == 'SI'){
-      Navigator.of(context).pushReplacementNamed(SENSORES_CACHE);
-    }
-    if(_existeEnCache == 'NO'){
+  void navigationPage() {    
+    if(_existeEnCache == 'S/D'){ // NO EXISTE EN CACHE
       Navigator.of(context).pushReplacementNamed(SENSORES);
+    }else{
+      Navigator.of(context).pushReplacementNamed(SENSORES_CACHE);
     }    
   }
 
   @override
   void initState() {
 
-    // animationController = new AnimationController( vsync: this, duration: new Duration(seconds: 2));
+    _getDatosCache().then((value){
+      print(value);
+    }); 
+
+    super.initState();
     animationController = new AnimationController( vsync: this, duration: new Duration(seconds: 2));
     animation = new CurvedAnimation(parent: animationController, curve: Curves.easeOut);
 
@@ -74,7 +62,6 @@ class SplashScreenState extends State<SplashScreen>
       _visible = !_visible;
     });    
     startTime();
-    super.initState();
   }
 
   @override
@@ -110,26 +97,4 @@ class SplashScreenState extends State<SplashScreen>
       ),
     );
   }
-
- // cargarData() {
-   // print(':::::: 1 :::::: INICIANDO PROCESO DE BD SQLLITE');
-    //sensoresProvider.loadDataSensors();
-    /*return FutureBuilder(
-      future: sensoresProvider.loadDataSensors(),
-      builder: ( BuildContext context, AsyncSnapshot<List<SensorModel>> snapshot){
-        if ( snapshot.hasData ) {
-          final sensores = snapshot.data;
-          print('sensores.length : '+sensores.length.toString());
-          /*return ListView.builder(
-            itemCount: 1, //sensores.length,
-            //itemBuilder: (context, i) => _crearItem(context, sensores[i] )
-          );*/
-        } else {
-          return Center( child: CircularProgressIndicator());
-        }
-      }
-    );*/
-//  }
-
-
 }
